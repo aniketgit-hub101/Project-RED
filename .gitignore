@@ -1,0 +1,29 @@
+# Local Python environments
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+
+# DevPi local server state
+infrastructure/devpi/server/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Test/cache artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+
+# Secrets / local configuration
+.env
+.env.*
+*.secret
+*.pem
+*.key
