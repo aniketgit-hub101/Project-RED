@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "red"
+version = "0.1.0"
+description = "Project RED AI training acceleration SDK"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["red", "red.utils", "red.engines", "red.security"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"] 

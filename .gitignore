@@ -1,0 +1,23 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Packaging & build artifacts
+*.egg-info/
+red.egg-info/
+dist/
+build/
+
+# Pytest & temporary files
+.pytest_cache/
+.coverage
+htmlcov/
+*.tmp
+*.tmp.*
