@@ -1,0 +1,22 @@
+[33mcommit 3c5206b87d0354c962547661ff3a5963ee6ee6b7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: Aniket Gautam <aniketgit-hub101@users.noreply.github.com>
+Date:   Mon Oct 26 23:55:25 2026 +0530
+
+    feat(core): close Gate G1 and implement Gate G2 RedState machine
+
+ .gitignore               |  23 [32m++++[m
+ pyproject.toml           |  16 [32m+++[m
+ red/__init__.py          |  33 [32m+++++[m
+ red/_time.py             |  13 [32m++[m
+ red/config.py            | 188 [32m++++++++++++++++++++++++++[m
+ red/engines/__init__.py  |   2 [32m+[m
+ red/exceptions.py        |  41 [32m++++++[m
+ red/security/__init__.py |   2 [32m+[m
+ red/state.py             | 333 [32m+++++++++++++++++++++++++++++++++++++++++++++++[m
+ red/utils/__init__.py    |   8 [32m++[m
+ red/utils/atomic.py      |  78 [32m+++++++++++[m
+ scripts/hygiene_check.py | 161 [32m+++++++++++++++++++++++[m
+ tests/conftest.py        |  11 [32m++[m
+ tests/test_g1.py         | 214 [32m++++++++++++++++++++++++++++++[m
+ tests/test_g2_state.py   | 163 [32m+++++++++++++++++++++++[m
+ 15 files changed, 1286 insertions(+)
