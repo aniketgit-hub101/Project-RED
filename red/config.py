@@ -2,7 +2,7 @@
 red.config
 RedConfig dataclass and environment variable overrides per Master §6.12.
 """
-
+import dataclasses
 import math
 import os
 from dataclasses import dataclass
@@ -10,7 +10,6 @@ from typing import Any, Optional
 from .exceptions import RedConfigError
 
 __all__ = ["RedConfig"]
-
 _MIN_LLM_GATE_SAMPLES = 512
 
 
@@ -104,6 +103,7 @@ class RedConfig:
                     f"llm_gate_val_loader must contain at least {_MIN_LLM_GATE_SAMPLES} samples (got {count})."
                 )
 
+        # Trigger pruner precondition validation if explicit pruning schedule or loader is provided
         if explicit_start or explicit_end or self.llm_gate_val_loader is not None:
             self.validate_pruner(is_transformer=self.llm_gate_val_loader is not None)
 
@@ -123,6 +123,9 @@ class RedConfig:
                 raise RedConfigError("pruning_end_step must be > pruning_start_step.")
             if self.total_training_steps is not None and self.pruning_end_step > self.total_training_steps:
                 raise RedConfigError("pruning_end_step cannot exceed total_training_steps.")
+
+    def replace(self, **changes: Any) -> "RedConfig":
+        return dataclasses.replace(self, **changes)
 
     def validate_pruner(self, is_transformer: bool = False) -> None:
         if self.pruning_stages <= 0 or self.pruning_target <= 0.0:
@@ -144,45 +147,31 @@ class RedConfig:
     def from_env(cls, llm_gate_val_loader: Optional[Any] = None) -> "RedConfig":
         def _get_opt_int(env_key: str, default: Optional[int]) -> Optional[int]:
             raw = os.environ.get(env_key)
-            if raw is None:
-                return default
-            try:
-                return int(raw)
-            except ValueError as exc:
-                raise RedConfigError(f"Invalid integer for {env_key}: {raw!r}") from exc
-
-        def _get_int(env_key: str, default: int) -> int:
-            val = _get_opt_int(env_key, default)
-            assert val is not None
-            return val
+            if raw is None: return default
+            try: return int(raw)
+            except ValueError as exc: raise RedConfigError(f"Invalid integer for {env_key}: {raw!r}") from exc
 
         def _get_float(env_key: str, default: float) -> float:
             raw = os.environ.get(env_key)
-            if raw is None:
-                return default
-            try:
-                val = float(raw)
-            except ValueError as exc:
-                raise RedConfigError(f"Invalid float for {env_key}: {raw!r}") from exc
-            if not math.isfinite(val):
-                raise RedConfigError(f"Non-finite float for {env_key}: {raw!r}")
+            if raw is None: return default
+            try: val = float(raw)
+            except ValueError as exc: raise RedConfigError(f"Invalid float for {env_key}: {raw!r}") from exc
+            if not math.isfinite(val): raise RedConfigError(f"Non-finite float for {env_key}: {raw!r}")
             return val
 
         defaults = cls()
-        out_dir = os.environ.get("RED_OUTPUT_DIR", defaults.output_dir)
-
         return cls(
-            dbc_reset_interval=_get_int("RED_DBC_RESET_INTERVAL", defaults.dbc_reset_interval),
-            min_batch_size=_get_int("RED_MIN_BATCH_SIZE", defaults.min_batch_size),
-            patience=_get_int("RED_PATIENCE", defaults.patience),
-            warmup_steps=_get_int("RED_WARMUP_STEPS", defaults.warmup_steps),
+            dbc_reset_interval=_get_opt_int("RED_DBC_RESET_INTERVAL", defaults.dbc_reset_interval) or defaults.dbc_reset_interval,
+            min_batch_size=_get_opt_int("RED_MIN_BATCH_SIZE", defaults.min_batch_size) or defaults.min_batch_size,
+            patience=_get_opt_int("RED_PATIENCE", defaults.patience) or defaults.patience,
+            warmup_steps=_get_opt_int("RED_WARMUP_STEPS", defaults.warmup_steps) or defaults.warmup_steps,
             min_delta=_get_float("RED_MIN_DELTA", defaults.min_delta),
             suppression_steps=_get_opt_int("RED_SUPPRESSION_STEPS", None),
             pruning_start_step=_get_opt_int("RED_PRUNING_START_STEP", None),
             pruning_end_step=_get_opt_int("RED_PRUNING_END_STEP", None),
-            pruning_stages=_get_int("RED_PRUNING_STAGES", defaults.pruning_stages),
+            pruning_stages=_get_opt_int("RED_PRUNING_STAGES", defaults.pruning_stages) or defaults.pruning_stages,
             pruning_target=_get_float("RED_PRUNING_TARGET", defaults.pruning_target),
             total_training_steps=_get_opt_int("RED_TOTAL_TRAINING_STEPS", defaults.total_training_steps),
-            output_dir=out_dir,
+            output_dir=os.environ.get("RED_OUTPUT_DIR", defaults.output_dir),
             llm_gate_val_loader=llm_gate_val_loader,
         )
