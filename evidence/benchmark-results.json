@@ -1,0 +1,53 @@
+{
+  "environment": {
+    "python_version": "3.13.15",
+    "pytorch_version": "2.14.1+cpu",
+    "cuda_available": false,
+    "cuda_version": "CPU-Simulated-Ceiling",
+    "seed": 42
+  },
+  "runs": {
+    "baseline_batch_32": {
+      "mode": "baseline",
+      "device": "CPU (Intel64 Family 6 Model 197 Stepping 2, GenuineIntel)",
+      "completed_steps": "0/60",
+      "unhandled_oom_crashes": 1,
+      "automatic_oom_recoveries": 0,
+      "nan_grad_overflows_caught": 0,
+      "weights_finite_at_end": true,
+      "peak_allocated_mb": 64.0,
+      "peak_reserved_mb": 80.0,
+      "steps_per_sec": 0.0,
+      "total_time_s": 0.0,
+      "final_loss": null
+    },
+    "baseline_conservative_batch_16": {
+      "mode": "baseline",
+      "device": "CPU (Intel64 Family 6 Model 197 Stepping 2, GenuineIntel)",
+      "completed_steps": "14/60",
+      "unhandled_oom_crashes": 1,
+      "automatic_oom_recoveries": 0,
+      "nan_grad_overflows_caught": 0,
+      "weights_finite_at_end": true,
+      "peak_allocated_mb": 96.0,
+      "peak_reserved_mb": 120.0,
+      "steps_per_sec": 66.65,
+      "total_time_s": 0.21,
+      "final_loss": 1.67403
+    },
+    "project_red_batch_32": {
+      "mode": "project_red",
+      "device": "CPU (Intel64 Family 6 Model 197 Stepping 2, GenuineIntel)",
+      "completed_steps": "60/60",
+      "unhandled_oom_crashes": 0,
+      "automatic_oom_recoveries": 3,
+      "nan_grad_overflows_caught": 1,
+      "weights_finite_at_end": true,
+      "peak_allocated_mb": 48.0,
+      "peak_reserved_mb": 53.76,
+      "steps_per_sec": 29.14,
+      "total_time_s": 2.0592,
+      "final_loss": 0.10334
+    }
+  }
+}

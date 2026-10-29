@@ -1,10 +1,14 @@
 """
 red.engines
-Engine subsystem package exposing Phase 0 contract stubs and mocks.
+Engine subsystem package exposing Phase 0 contract stubs/mocks and Stage S3
+PyTorch runtime engines (`AMPManager`, `TorchOptimizer`, `DynamicBatchController`).
 """
 
+from .amp import AMPManager
+from .dbc import DynamicBatchController
+from .optimizer import TorchOptimizer
 from .stubs import (
-     EarlyStopperMock,
+    EarlyStopperMock,
     MOCK_CONTRACT_VERSION,
     MagnitudePrunerStub,
     MemoryProfilerStub,
@@ -17,4 +21,7 @@ __all__ = [
     "MemoryProfilerStub",
     "MagnitudePrunerStub",
     "EarlyStopperMock",
+    "AMPManager",
+    "TorchOptimizer",
+    "DynamicBatchController",
 ]

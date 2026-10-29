@@ -4,6 +4,7 @@ Public package exports per Master §6.8, AR-02.6, and Commandment 13.
 """
 
 from .config import RedConfig
+from .engines import AMPManager, DynamicBatchController, TorchOptimizer
 from .exceptions import (
     PREPRUNING_CHECKPOINT_MISSING,
     RED_COMPILE_WARNING,
@@ -30,4 +31,7 @@ __all__ = [
     "RedStateMachine",
     "RedSharedState",
     "status",
+    "AMPManager",
+    "TorchOptimizer",
+    "DynamicBatchController",
 ]
