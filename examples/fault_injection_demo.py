@@ -1,34 +1,31 @@
-﻿"""
-Deterministic Fault-Injection Demo
-Demonstrates control-flow micro-batch halving and gradient accumulation scaling upon simulated OOM.
-Makes zero hardware benchmark, throughput, or memory reduction claims.
-"""
-
-class SimulatedEventBus:
-    def __init__(self):
-        self.micro_batch = 16
-        self.grad_accum_steps = 1
-        self.state = "RUNNING"
-
-    def emit_fault(self, fault_type: str):
-        if fault_type == "CUDA_OOM_SIMULATED":
-            print(f"[RECOVERY] Caught {fault_type}. Halving micro-batch and scaling accumulation...")
-            self.micro_batch //= 2
-            self.grad_accum_steps *= 2
-            self.state = "RECOVERED"
+﻿from red.state import RedSharedState, RedState
+from red.config import RedConfig
+from red.engines.dbc import DynamicBatchController, RedVRAMExhaustedError
 
 def main():
-    bus = SimulatedEventBus()
-    print(f"[INIT] Micro-batch: {bus.micro_batch}, Accumulation: {bus.grad_accum_steps}")
+    config = RedConfig(min_batch_size=4)
+    state = RedSharedState()
+    state.state_machine.transition_to(RedState.RUNNING)
     
-    # Inject synthetic memory spike
-    bus.emit_fault("CUDA_OOM_SIMULATED")
+    dbc = DynamicBatchController(config, state)
+    dbc._current_batch_size = 16
+    print(f"[INIT] Micro-batch: {dbc._current_batch_size}")
     
-    print(f"[STATE] Current status: {bus.state}")
-    print(f"[STATE] Micro-batch: {bus.micro_batch}, Accumulation: {bus.grad_accum_steps}")
-    assert bus.micro_batch == 8
-    assert bus.grad_accum_steps == 2
-    print("[SUCCESS] Fault recovery control-flow verified.")
+    # Fault 1
+    dbc.handle_oom()
+    print(f"[RECOVERY 1] Adjusted micro-batch: {dbc._current_batch_size}")
+    
+    # Fault 2
+    dbc.handle_oom()
+    print(f"[RECOVERY 2] Adjusted micro-batch: {dbc._current_batch_size}")
+    
+    # Fault 3 (Hits min-batch limit)
+    try:
+        dbc.handle_oom()
+    except RedVRAMExhaustedError as e:
+        print(f"[TERMINAL FAULT] Caught expected exception: {e}")
+        final_state = getattr(state.state_machine, "state", getattr(state.state_machine, "current_state", None))
+        print(f"[STATE] Final state: {final_state}")
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
-import time
-from typing import Any, Callable, Optional
+import logging
+from typing import Optional, Callable, Any
 
 try:
     import torch
@@ -9,57 +9,30 @@ except ImportError:
     TORCH_AVAILABLE = False
 
 from ..config import RedConfig
-from ..exceptions import RedHookConflictError
-from ..state import RedSharedState, RedState
+from ..state import RedSharedState
 from .amp import AMPManager
 
 __all__ = ["TorchOptimizer"]
-
-HOOK_ATTR = "_red_active_optimizer_hook"
+logger = logging.getLogger("red.optimizer")
 
 class TorchOptimizer:
-    """
-    Core Project RED optimizer wrapper enforcing RedState.RUNNING before
-    any parameter update and coordinating AMP overflow strikes.
-    """
-
     def __init__(
         self,
-        optimizer,
+        optimizer: Any,
         config: Optional['RedConfig'] = None,
         shared_state: Optional['RedSharedState'] = None,
         *,
         amp_manager: Optional['AMPManager'] = None,
     ) -> None:
-        if TORCH_AVAILABLE and torch is not None and not isinstance(optimizer, torch.optim.Optimizer):
-            raise TypeError(
-                f"Optimizer must be a torch.optim.Optimizer instance, got {type(optimizer).__name__}."
-            )
-        
-        if getattr(optimizer, HOOK_ATTR, False):
-            raise RedHookConflictError(
-                "Optimizer already has an active TorchOptimizer hook attached."
-            )
+        if TORCH_AVAILABLE:
+            assert torch is not None
+            if not isinstance(optimizer, torch.optim.Optimizer):
+                raise TypeError("Optimizer must be a torch.optim.Optimizer instance.")
         
         self.optimizer = optimizer
-        setattr(self.optimizer, HOOK_ATTR, True)
-        
-        # Register PyTorch step pre-hook
-        if hasattr(self.optimizer, "register_step_pre_hook"):
-            self._pre_hook_handle = self.optimizer.register_step_pre_hook(self._pre_step_hook)
-        else:
-            self._pre_hook_handle = None
-
         self.config = config if config is not None else RedConfig()
         self.shared_state = shared_state if shared_state is not None else RedSharedState()
         self.amp_manager = amp_manager
-
-    def _pre_step_hook(self, optimizer, args, kwargs):
-        """Detach or sanitize gradients safely prior to step execution."""
-        for group in optimizer.param_groups:
-            for p in group["params"]:
-                if p.grad is not None:
-                    p.grad = p.grad.detach()
 
     @property
     def param_groups(self):
@@ -75,12 +48,36 @@ class TorchOptimizer:
         self.optimizer.load_state_dict(state_dict)
 
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
-        """
-        Performs a single optimization step.
-        """
         if self.shared_state:
             self.shared_state.state_machine.require_running("TorchOptimizer.step")
 
-        # Gradient sanitization is handled natively by _pre_step_hook.
-        # Execute the underlying optimizer step cleanly.
+        # AMP NaN-skip logic
+        if self.amp_manager and getattr(self.amp_manager, 'enabled', False):
+            is_finite = True
+            if TORCH_AVAILABLE:
+                assert torch is not None
+                for group in self.optimizer.param_groups:
+                    for p in group["params"]:
+                        if p.grad is not None and not torch.isfinite(p.grad).all():
+                            is_finite = False
+                            break
+                    if not is_finite:
+                        break
+            
+            if not is_finite:
+                setattr(
+                    self.amp_manager,
+                    "consecutive_strikes",
+                    getattr(self.amp_manager, "consecutive_strikes", 0) + 1,
+                )
+                setattr(
+                    self.amp_manager,
+                    "total_overflows",
+                    getattr(self.amp_manager, "total_overflows", 0) + 1,
+                )
+                logger.warning("Corrupted gradients detected (NaN/Inf). Skipping optimizer step.")
+                return None
+            else:
+                setattr(self.amp_manager, "consecutive_strikes", 0)
+
         return self.optimizer.step(closure=closure)

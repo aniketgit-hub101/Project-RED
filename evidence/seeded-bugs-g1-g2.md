@@ -3,7 +3,7 @@
 **Author:** Aniket Gautam  
 **Date:** 2026-10-27  
 **Gate Requirement:** Gate G1 Criterion 2 (`>= 8/10` seeded bugs root-caused and fixed with regression tests).  
-**Score:** 10 / 10 Root-Caused, Fixed, and Verified.
+**Score:** UNVERIFIED.
 
 ---
 
