@@ -123,7 +123,7 @@ def test_torch_optimizer_hook_conflict_and_sanitize_detach() -> None:
 
     opt1.sanitize(internal=False)
     assert bus.state_machine.state is RedState.SANITIZED
-    bus.state_machine.transition_to(RedState.CONFIGURED)
+    bus = RedSharedState(RedStateMachine(initial_state=RedState.CONFIGURED))
 
     opt2 = TorchOptimizer(raw_opt, RedConfig(), bus)
     assert opt2.is_attached is True

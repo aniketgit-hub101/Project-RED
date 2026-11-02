@@ -19,7 +19,7 @@ def test_exhaustive_12_legal_state_pairs() -> None:
         (RedState.CONFIGURED, RedState.RUNNING), (RedState.CONFIGURED, RedState.FAILED),
         (RedState.RUNNING, RedState.PAUSED), (RedState.RUNNING, RedState.SANITIZED), (RedState.RUNNING, RedState.FAILED),
         (RedState.PAUSED, RedState.RUNNING), (RedState.PAUSED, RedState.SANITIZED), (RedState.PAUSED, RedState.FAILED),
-        (RedState.SANITIZED, RedState.CONFIGURED), (RedState.FAILED, RedState.SANITIZED),
+        (RedState.SANITIZED, RedState.FAILED), (RedState.FAILED, RedState.SANITIZED),
     }
     assert len(expected_legal) == 12
 
@@ -57,13 +57,15 @@ def test_dg63_public_vs_internal_sanitize_and_terminal_failed() -> None:
     assert machine.sanitize(internal=True) is False
     assert machine.state is RedState.SANITIZED
 
-    machine.transition_to(RedState.CONFIGURED)
-    with pytest.raises(RedStateError, match="Cannot call public sanitize"):
+    assert machine.can_transition(RedState.CONFIGURED) is False
+    with pytest.raises(RedStateError):
+        machine.transition_to(RedState.CONFIGURED)
+    with pytest.raises(RedStateError, match="public sanitize"):
         machine.sanitize(internal=False)
     assert machine.sanitize(internal=True) is False
 
     machine.transition_to(RedState.FAILED, reason="test_failure")
-    with pytest.raises(RedStateError, match="Cannot call public sanitize"):
+    with pytest.raises(RedStateError, match="public sanitize"):
         machine.sanitize(internal=False)
     assert machine.sanitize(internal=True) is False
 

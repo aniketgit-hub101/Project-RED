@@ -55,7 +55,7 @@ LEGAL_STATE_TRANSITIONS: Final[Mapping[RedState, frozenset[RedState]]] = Mapping
         RedState.CONFIGURED: frozenset({RedState.RUNNING, RedState.FAILED}),
         RedState.RUNNING: frozenset({RedState.PAUSED, RedState.SANITIZED, RedState.FAILED}),
         RedState.PAUSED: frozenset({RedState.RUNNING, RedState.SANITIZED, RedState.FAILED}),
-        RedState.SANITIZED: frozenset({RedState.CONFIGURED}),
+        RedState.SANITIZED: frozenset({RedState.FAILED}),
         RedState.FAILED: frozenset({RedState.SANITIZED}),
     }
 )
