@@ -1,30 +1,42 @@
-from importlib import import_module
+﻿"""
+red.engines
+Runtime optimization, mixed-precision, and dynamic batching engines.
+"""
+
+from .stubs import (
+    EarlyStopperMock,
+    MOCK_CONTRACT_VERSION,
+    MagnitudePrunerStub,
+    MemoryProfilerStub,
+    STUB_CONTRACT_VERSION,
+)
 
 try:
-    import torch
+    import torch as _torch
     TORCH_AVAILABLE = True
 except ImportError:
-    torch = None
     TORCH_AVAILABLE = False
 
 if TORCH_AVAILABLE:
-    from .optimizer import TorchOptimizer
-    from .amp import AMPManager
+    from . import amp as _amp
+    AMPManager = _amp.AMPManager
+    RedCheckpointError = getattr(_amp, "RedCheckpointError", None)
     from .dbc import DynamicBatchController
-
-try:
-    _stubs = import_module("..stubs", package=__name__)
-    EarlyStopperMock = _stubs.EarlyStopperMock
-    MemoryProfilerStub = _stubs.MemoryProfilerStub
-    MagnitudePrunerStub = _stubs.MagnitudePrunerStub
-except (ImportError, AttributeError):
-    EarlyStopperMock = MemoryProfilerStub = MagnitudePrunerStub = None
+    from .optimizer import TorchOptimizer
+else:
+    AMPManager = None  # type: ignore[assignment,misc]
+    RedCheckpointError = None  # type: ignore[assignment,misc]
+    DynamicBatchController = None  # type: ignore[assignment,misc]
+    TorchOptimizer = None  # type: ignore[assignment,misc]
 
 __all__ = [
-    "TorchOptimizer", 
-    "AMPManager", 
+    "AMPManager",
+    "RedCheckpointError",
     "DynamicBatchController",
+    "TorchOptimizer",
     "EarlyStopperMock",
     "MemoryProfilerStub",
-    "MagnitudePrunerStub"
+    "MagnitudePrunerStub",
+    "MOCK_CONTRACT_VERSION",
+    "STUB_CONTRACT_VERSION",
 ]
